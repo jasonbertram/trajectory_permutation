@@ -2,64 +2,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools
 from scipy.stats import combine_pvalues
+#plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.cividis.colors)
+
+#sample size for permuting long trajectories
+sample_size=10000
 
 def roc(pvals1,pvals2,n):
+    """Receiver operating characteristic"""
     L1=len(pvals1)
     L2=len(pvals2)
-    return np.array([[np.sum(pvals1<alph)/L1,np.sum(pvals2<alph)/L2] for alph in np.linspace(0,1,n)])
+    return np.array([[np.sum(pvals1<=alph)/L1,np.sum(pvals2<=alph)/L2] for alph in np.linspace(0,1,n)])
 
-#%%
-#increment order permutation
-#########################
 
-T=71
-N=10000
-phi=np.array([0.])
-s_std=0.00
-s_hist=np.random.normal(0,s_std,len(phi))
+def perm_freq(trajectories):
+    p_vals=np.zeros(len(trajectories))
+    T=len(trajectories[0])
+    for i,p in enumerate(trajectories):
+        if T>8: #do exact test for trajectories <= 8 points long
+            perm_p=np.array([np.random.permutation(p) for _ in range(sample_size)])
+            perm_p[0]=p
+        else:
+            perm_p=np.array([_ for _ in itertools.permutations(p)])
+        dp=np.diff(perm_p)
+        d_perm=np.mean(np.abs(dp),1) #average increment magnitude
+        d_obs=np.mean(np.abs(np.diff(p)))
+        p_vals[i]=np.sum((d_perm-d_obs)<1e-6)/len(d_perm) #unusually small
+    return p_vals
 
-num_traj=10000
-p_vals=np.zeros(num_traj)
-p_vals_complement=np.zeros(num_traj)
-p_vals_twoside=np.zeros(num_traj)
-
-fixed_arg=(p_vals==p_vals)
-fixed_arg_1=(p_vals==p_vals)
-
-#f=open('sim_data_3.txt','a')
-
-for i in range(num_traj):
-    p=np.zeros(T)
-    p[0]=0.5+0*np.random.rand()/100
-
-    pulse_position=np.random.randint(T)
-    for t in range(1,T):
-        #s=np.sum((1)**(np.mod(i,2))*phi*s_hist)+np.random.normal(0,s_std)
-        #s_hist=np.concatenate([[s],s_hist[1:]])
-        #if t==pulse_position:
-        #    s=1
-        #else:
-        s=0.02
-        p[t]=np.random.binomial(N,p[t-1]+s*p[t-1]*(1-p[t-1]))/N
-
-    if p[-1]==0:
-        fixed_arg[i]=False
-
-    #plt.plot(p)
-    p=p[0:71:10]+np.random.normal(0,0.01,8)
-    #np.savetxt(f,p.reshape(1,-1),fmt='%1.3f',delimiter=',')
-
-    p=p[p>0]
-
-    if len(p)==1:
-        fixed_arg_1[i]=False
-    else:
+def perm_incr(trajectories):
+    p_vals=np.zeros(len(trajectories))
+    T=len(trajectories[0])-1
+    for i,p in enumerate(trajectories):
         dp=np.diff(p)
-
-        perm_dp=np.array([_ for _ in itertools.permutations(dp)])
+        if T>8: #do exact test for trajectories <= 9 points long
+            perm_dp=np.array([np.random.permutation(dp) for _ in range(sample_size)])
+            perm_dp[0]=dp
+        else:
+            perm_dp=np.array([_ for _ in itertools.permutations(dp)])
         perm_p=np.cumsum(perm_dp,1)
-
-        #plt.plot(perm_p.transpose(),linewidth=0.5,alpha=0.5)
 
         p_mean=np.mean(perm_p,0)
         abs_devs=np.abs(perm_p-p_mean)
@@ -67,145 +47,119 @@ for i in range(num_traj):
         d_obs=np.mean(np.abs(p[1:]-p[0]-p_mean))
 
         p_vals[i]=np.sum((d_perm-d_obs)<1e-6)/len(d_perm) #unusually small
-        p_vals_complement[i]=np.sum((d_obs-d_perm)<1e-6)/len(d_perm) #unusually large
-        p_vals_twoside[i]=2*np.min([p_vals[i],p_vals_complement[i]])
-        
-#print(np.sum(np.log(p_vals)))
+    return p_vals
 
-#f.close()
+def perm_sign(trajectories):
+    p_vals=np.zeros(len(trajectories))
+    sgn_prm=np.array(list(itertools.product([-1,1], repeat=len(trajectories)))) #sign permutation matrix
+    for i,p in enumerate(trajectories):
+        dp=np.diff(p)
+        d_perm=np.sum(sgn_prm*dp, axis=1)
+        p_vals[i]=np.sum((np.abs(d_perm)-np.abs(p[0]-p[-1]))<1e-6)/len(d_perm)
+    return p_vals
 
-print(combine_pvalues(p_vals[fixed_arg_1]))
-print(combine_pvalues(p_vals_complement[fixed_arg_1]))
-print(combine_pvalues(p_vals_twoside[fixed_arg_1]))
+def gen_traj(N,s,s_std,p0,sig,skip,num_mes,numtraj):
+    """ Return numtraj simulated Wright-Fisher trajectories 
+    N popsize
+    s sel coeff
+    s_std standard dev of s
+    T time steps
+    p0 init
+    sig measurement std dev
+    skip measurement interval
+    """
 
-#%%
-plt.hist(p_vals)
-
-plt.figure()
-plt.hist(p_vals_complement)
-
-#p_vals_expanded=np.concatenate([p_vals,np.random.rand(1000)])
-p_vals_expanded=np.concatenate([p_vals,np.ones(100)])
-print(combine_pvalues(p_vals_expanded))
-
-#%%
-#increment sign permutation
-##################################
-
-T=71
-N=1000
-
-num_traj=100
-p_vals=np.zeros(num_traj)
-p_vals_complement=np.zeros(num_traj)
-p_vals_twoside=np.zeros(num_traj)
-
-sgn_prm=np.array(list(itertools.product([-1,1], repeat=int(np.floor(T/10)))))
-
-init=0.3
-for i in range(num_traj):
-    p=np.zeros(T)
-    p[0]=init
+    T=skip*num_mes
+    p=p0*np.ones([numtraj,T])
+    p[:,0]=0.5
 
     for t in range(1,T):
-        #p[t]=0.5*p[t-1]+np.random.normal(0,1)
-        p[t]=np.random.binomial(N,p[t-1]+(1)**t*0.02*p[t-1]*(1-p[t-1]))/N
+        svec=s*np.ones(numtraj)+np.random.normal(0,s_std,size=numtraj)
+        p[:,t]=np.random.binomial(N,p[:,t-1]+svec*p[:,t-1]*(1-p[:,t-1]))/N
 
-    #p=p+np.random.normal(0,0.05,size=T)
-    p=p[0:71:10]+np.random.normal(0,0.00,8)
-    dp=np.diff(p)
+    #measurement 
+    p=p[:,0:T:skip]+np.random.normal(0,sig,size=[numtraj,num_mes])
 
-    d_perm=np.sum(sgn_prm*dp, axis=1)
-
-    p_vals[i]=np.sum((np.abs(d_perm)-np.abs(p[0]-p[-1]))<1e-6)/len(d_perm)
-    if p_vals[i]==0: print(p[-1],d_perm)
-    p_vals_complement[i]=np.sum((np.abs(p[0]-p[-1])-np.abs(d_perm))<1e-6)/len(d_perm)
-    
-plt.hist(p_vals)
-plt.figure()
-plt.hist(p_vals_complement)
-
-print(combine_pvalues(p_vals))
-print(combine_pvalues(p_vals_complement))
-
+    return p
 
 #%%
 #frequency permutation
 ##################################
 
-T=21+1
-N=100000000
-phi=np.array([0.])
-s_std=0.00
-s_hist=np.random.normal(0,s_std,len(phi))
-
 num_traj=1000
-p_vals=np.zeros(num_traj)
-p_vals_complement=np.zeros(num_traj)
-p_vals_twoside=np.zeros(num_traj)
+p0=0.5
+skip=4
+num_mes=10
+sig=0.01
+#N,s,s_std,sig
+scenarios={'Drift':[int(1e3),0,0],
+           'Directional weak':[int(1e10),0.001,0],
+           'Directional strong':[int(1e10),0.005,0],
+           'Fluctuating strong':[int(1e10),0,0.05],
+           'Fluctuating weak':[int(1e10),0,0.01]}
 
-fixed_arg=(p_vals==p_vals)
-fixed_arg_1=(p_vals==p_vals)
+fig, axs=plt.subplots(2,1,figsize=[3,6])
 
-#f=open('sim_data_3.txt','a')
+N,s,s_std=[int(1e10),0,0]
+p_vals_null=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+for _ in scenarios:
+    N,s,s_std=scenarios[_]
+    p_vals=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+    roc1=roc(p_vals_null,p_vals,100)
+    axs[0].plot(roc1[:,0],roc1[:,1],label=_)
 
-for i in range(num_traj):
-    p=0.5*np.ones(T)
-    p[0]=0.5+0*np.random.rand()/100
+    #alph=0.05
+    #L=len(p_vals)
+    #fpr,tpr=([np.sum(p_vals_null<alph)/L,np.sum(p_vals<alph)/L])
+    #print(_,np.array([[tpr,1-tpr],[fpr,1-fpr]]))
 
-    pulse_position=np.random.randint(T)
-    for t in range(1,T):
-        #s=np.sum((1)**(np.mod(i,2))*phi*s_hist)+np.random.normal(0,s_std)
-        #s_hist=np.concatenate([[s],s_hist[1:]])
-        #if t==pulse_position:
-        #    s=1
-        #else:
-        s=0.00+np.random.normal(0,0.02)
-        p[t]=np.random.binomial(N,p[t-1]+s*p[t-1]*(1-p[t-1]))/N
+axs[0].legend()
+axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
+axs[0].set_ylabel('True positive rate')
+axs[0].set_title(r'$\sigma=0.01$')
+#axs[0].set_xlabel('False positive rate')
 
-    if p[-1]==0:
-        fixed_arg[i]=False
+sig=0.03
+N,s,s_std=[int(1e10),0,0]
+p_vals_null=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+for _ in scenarios:
+    N,s,s_std=scenarios[_]
+    p_vals=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+    roc1=roc(p_vals_null,p_vals,100)
+    axs[1].plot(roc1[:,0],roc1[:,1],label=_)
 
-    #plt.plot(p)
-    p=p[0:T:3]+np.random.normal(0,0.01,8)
-    #np.savetxt(f,p.reshape(1,-1),fmt='%1.3f',delimiter=',')
+#axs[1].legend()
+axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
+axs[1].set_ylabel('True positive rate')
+axs[1].set_xlabel('False positive rate')
+axs[1].set_title(r'$\sigma=0.03$')
 
-    p=p[p>0]
+plt.savefig('roc_freq.pdf', bbox_inches='tight')
 
-    if len(p)==1:
-        fixed_arg_1[i]=False
-    else:
-        perm_p=np.array([_ for _ in itertools.permutations(p)])
-
-        dp=np.diff(perm_p)
-        #plt.plot(perm_p.transpose(),linewidth=0.5,alpha=0.5)
-    
-        #average increment magnitude
-        d_perm=np.mean(np.abs(dp),1)
-        d_obs=np.mean(np.abs(np.diff(p)))
-
-        p_vals[i]=np.sum((d_perm-d_obs)<1e-6)/len(d_perm) #unusually small
-        p_vals_complement[i]=np.sum((d_obs-d_perm)<1e-6)/len(d_perm) #unusually large
-        p_vals_twoside[i]=2*np.min([p_vals[i],p_vals_complement[i]])
-        
-#print(np.sum(np.log(p_vals)))
-
-#f.close()
-
-print(combine_pvalues(p_vals[fixed_arg_1]))
-print(combine_pvalues(p_vals_complement[fixed_arg_1]))
-print(combine_pvalues(p_vals_twoside[fixed_arg_1]))
+#print(combine_pvalues(p_vals[fixed_arg_1]))
+#print(combine_pvalues(p_vals_complement[fixed_arg_1]))
+#print(combine_pvalues(p_vals_twoside[fixed_arg_1]))
 
 #%%
-plt.hist(p_vals)
+#increment order permutation
+#########################
 
-plt.figure()
-plt.hist(p_vals_complement)
+p_vals_null=perm_incr(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
 
-#p_vals_expanded=np.concatenate([p_vals,np.random.rand(1000)])
-p_vals_expanded=np.concatenate([p_vals,np.ones(100)])
-print(combine_pvalues(p_vals_expanded))
 
+#print(combine_pvalues(p_vals[fixed_arg_1]))
+#print(combine_pvalues(p_vals_complement[fixed_arg_1]))
+#print(combine_pvalues(p_vals_twoside[fixed_arg_1]))
+
+
+#%%
+#increment sign permutation
+##################################
+
+
+
+
+#=========================================================================
 #%%
 #pvalue merge functions with dependence but assuming exchangeability
 #Gasparin et al 2025 PNAS.
