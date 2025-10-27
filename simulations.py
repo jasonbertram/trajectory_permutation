@@ -14,6 +14,10 @@ def roc(pvals1,pvals2,n):
     return np.array([[np.sum(pvals1<=alph)/L1,np.sum(pvals2<=alph)/L2] for alph in np.linspace(0,1,n)])
 
 
+def power(pvals,alph):
+    """Receiver operating characteristic"""
+    return np.sum(pvals<=alph)/len(pvals)
+
 def perm_freq(trajectories):
     p_vals=np.zeros(len(trajectories))
     T=len(trajectories[0])
@@ -73,15 +77,23 @@ def reconstruct_transformed(dp,p0):
 
 def perm_sign(trajectories):
     p_vals=np.zeros(len(trajectories))
-    sgn_prm=np.array(list(itertools.product([-1,1], repeat=len(trajectories)))) #sign permutation matrix
+    T=len(trajectories[0])-1
+    #sign permutation matrix
+    if T>13:
+        sgn_prm=np.array([2*np.random.randint(2,size=T)-1 for _ in range(sample_size) ])
+        sgn_prm[0]=np.ones(T)
+    else:
+        sgn_prm=np.array(list(itertools.product([-1,1], repeat=T))) 
+
     for i,p in enumerate(trajectories):
         dp=np.diff(p)
         d_perm=np.sum(sgn_prm*dp, axis=1)
-        p_vals[i]=np.sum((np.abs(d_perm)-np.abs(p[0]-p[-1]))<1e-6)/len(d_perm)
+        #p_vals[i]=np.sum((np.abs(d_perm)-np.abs(p[0]-p[-1]))<1e-10)/len(d_perm)
+        p_vals[i]=np.sum((np.abs(d_perm)-np.abs(p[0]-p[-1]))>-1e-10)/len(d_perm)
     return p_vals
 
 
-def gen_traj(N,s,s_std,p0,sig,skip,num_mes,numtraj):
+def gen_traj(N,s,s_std,p0,n_s,skip,num_mes,numtraj):
     """ Return numtraj simulated Wright-Fisher trajectories 
     N popsize
     s sel coeff
@@ -99,8 +111,8 @@ def gen_traj(N,s,s_std,p0,sig,skip,num_mes,numtraj):
         svec=s*np.ones(numtraj)+np.random.normal(0,s_std,size=numtraj)
         p[:,t]=np.random.binomial(N,p[:,t-1]+svec*p[:,t-1]*(1-p[:,t-1]))/N
 
-    #measurement 
-    p=p[:,0:T:skip]+np.random.normal(0,sig,size=[numtraj,num_mes])
+    #sampling error 
+    p=np.random.binomial(n_s,p[:,0:T:skip])
 
     return p
 
@@ -109,11 +121,12 @@ def gen_traj(N,s,s_std,p0,sig,skip,num_mes,numtraj):
 ##################################
 
 num_traj=1000
-p0=0.2
+p0=0.5
 skip=4
 num_mes=10
-sig=0.01
-#N,s,s_std,sig
+n_s=100
+
+#N,s,s_std
 scenarios={'Drift':[int(1e3),0,0],
            'Directional weak':[int(1e10),0.001,0],
            'Directional strong':[int(1e10),0.005,0],
@@ -124,46 +137,119 @@ scenarios={'Drift':[int(1e3),0,0],
 #frequency permutation
 ##################################
 
+#roc
+
 fig, axs=plt.subplots(2,1,figsize=[3,6])
 
-N,s,s_std=[int(1e10),0,0]
-p_vals_null=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+n_s=1000
 for _ in scenarios:
     N,s,s_std=scenarios[_]
-    p_vals=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
-    roc1=roc(p_vals,np.linspace(0,1,num_traj),100)
+    p_vals=perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj))
+    roc1=roc(np.linspace(0,1,num_traj), p_vals, 100)
     axs[0].plot(roc1[:,0],roc1[:,1],label=_)
 
-    #alph=0.05
-    #L=len(p_vals)
-    #fpr,tpr=([np.sum(p_vals_null<alph)/L,np.sum(p_vals<alph)/L])
-    #print(_,np.array([[tpr,1-tpr],[fpr,1-fpr]]))
 
 axs[0].legend(fontsize=7)
 axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[0].set_ylabel('True positive rate')
-axs[0].set_title(r'$\sigma=0.01$')
+axs[0].set_title(r'$\sigma_e=0.01$',fontsize=10)
 #axs[0].set_xlabel('False positive rate')
 
-sig=0.03
-N,s,s_std=[int(1e10),0,0]
-p_vals_null=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
+n_s=100
 for _ in scenarios:
     N,s,s_std=scenarios[_]
-    p_vals=perm_freq(gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj))
-    roc1=roc(p_vals_null,p_vals,100)
+    p_vals=perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj))
+    roc1=roc(np.linspace(0,1,num_traj), p_vals, 100)
     axs[1].plot(roc1[:,0],roc1[:,1],label=_)
 
 axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[1].set_ylabel('True positive rate')
 axs[1].set_xlabel('False positive rate')
-axs[1].set_title(r'$\sigma=0.03$')
+axs[1].set_title(r'$\sigma_e=0.03$',fontsize=10)
 
-plt.savefig('roc_freq.pdf', bbox_inches='tight')
+#plt.savefig('roc_freq.pdf', bbox_inches='tight')
 
-#print(combine_pvalues(p_vals[fixed_arg_1]))
-#print(combine_pvalues(p_vals_complement[fixed_arg_1]))
-#print(combine_pvalues(p_vals_twoside[fixed_arg_1]))
+
+#%%
+#Power vs N
+fig, axs=plt.subplots(2,3,figsize=[6,4])
+
+s=0
+s_std=0
+N_vec=np.array([10**6, 10**5, 10**4, 10**3])
+
+#No measurement error
+n_s=10**10
+#short trajectory
+for num_mes in [10,50]:
+    skip=int(100/num_mes)
+    axs[0,0].semilogx(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label=num_mes)
+
+axs[0,0].legend(fontsize=8)
+axs[0,0].set_ylabel('Power (short trajectory)')
+axs[0,0].set_title('No error',fontsize=10)
+axs[0,0].set_xticklabels('')
+
+#long trajectory
+for num_mes in [10,50]:
+    skip=int(1000/num_mes)
+    axs[1,0].semilogx(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label=num_mes)
+
+axs[1,0].set_ylabel('Power (long trajectory)')
+
+#%%
+#n=1000
+n_s=1000
+#short trajectory
+for num_mes in [10,20,50]:
+    skip=int(100/num_mes)
+    axs[0,1].plot(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label='M'+str(num_mes))
+
+axs[0,1].set_title(r'$n=1000$',fontsize=10)
+axs[0,1].set_xticklabels('')
+axs[0,1].set_yticklabels('')
+
+#long trajectory
+for num_mes in [10,20,50]:
+    skip=int(1000/num_mes)
+    axs[1,1].plot(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label=num_mes)
+
+axs[1,1].set_xlabel(r'$Ns$')
+axs[1,1].set_yticklabels('')
+
+#n=100
+n_s=100
+#short trajectory
+for num_mes in [10,20,50]:
+    skip=int(100/num_mes)
+    axs[0,2].plot(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label=num_mes)
+
+axs[0,2].set_title(r'$n=100$',fontsize=10)
+axs[0,2].set_xticklabels('')
+axs[0,2].set_yticklabels('')
+
+#long trajectory
+for num_mes in [10,20,50]:
+    skip=int(1000/num_mes)
+    axs[1,2].plot(N_vec,
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
+                 ,label=num_mes)
+
+axs[1,2].set_yticklabels('')
+
+for _ in axs.flatten(): _.set_ylim([0,1])
+
+#plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
 
 #%%
 #increment order permutation
@@ -206,6 +292,85 @@ plt.savefig('roc_inc_trans.pdf', bbox_inches='tight')
 #%%
 #increment sign permutation
 ##################################
+
+#Comparison with Feder et al. 2014 
+fig, axs=plt.subplots(2,3,figsize=[6,4])
+
+s_std=0
+N=10**4
+s_vec=np.array([1,2,5,10,20,50,100])/N
+
+#No measurement error
+n_s=10**10
+#short trajectory
+for num_mes in [10,20,50]:
+    skip=int(100/num_mes)
+    axs[0,0].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label=num_mes)
+
+axs[0,0].legend(fontsize=8)
+axs[0,0].set_ylabel('Power (short trajectory)')
+axs[0,0].set_title('No error',fontsize=10)
+axs[0,0].set_xticklabels('')
+
+#long trajectory
+for num_mes in [10,20,50]:
+    skip=int(1000/num_mes)
+    axs[1,0].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label=num_mes)
+
+axs[1,0].set_ylabel('Power (long trajectory)')
+
+#n=1000
+n_s=1000
+#short trajectory
+for num_mes in [10,20,50]:
+    skip=int(100/num_mes)
+    axs[0,1].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label='M'+str(num_mes))
+
+axs[0,1].set_title(r'$n=1000$',fontsize=10)
+axs[0,1].set_xticklabels('')
+axs[0,1].set_yticklabels('')
+
+#long trajectory
+for num_mes in [10,20,50]:
+    skip=int(1000/num_mes)
+    axs[1,1].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label=num_mes)
+
+axs[1,1].set_xlabel(r'$Ns$')
+axs[1,1].set_yticklabels('')
+
+#n=100
+n_s=100
+#short trajectory
+for num_mes in [10,20,50]:
+    skip=int(100/num_mes)
+    axs[0,2].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label=num_mes)
+
+axs[0,2].set_title(r'$n=100$',fontsize=10)
+axs[0,2].set_xticklabels('')
+axs[0,2].set_yticklabels('')
+
+#long trajectory
+for num_mes in [10,20,50]:
+    skip=int(1000/num_mes)
+    axs[1,2].plot(N*s_vec,
+                [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
+                 ,label=num_mes)
+
+axs[1,2].set_yticklabels('')
+
+for _ in axs.flatten(): _.set_ylim([0,1])
+
+plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
 
 
 
