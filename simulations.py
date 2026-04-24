@@ -256,23 +256,24 @@ for _ in axs.flatten():_.set_xticks(N_vec)
 #%%
 #Power vs s variance
 
-num_traj=100
+num_traj=1000
 
 fig, axs=plt.subplots(2,3,figsize=[6,4])
 
 s=0
 s_std=np.array([0,1e-3,1e-2,1e-1])
 N=10**8
-num_mes_vec=[10,50]
-skip=10
+num_mes_vec=[10]
+skip=4
 
 #No measurement error
 n_s=10**10
+
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
     axs[0,0].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
+               [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
                  ,label=num_mes)
 
 axs[0,0].legend(fontsize=8)
@@ -332,7 +333,7 @@ for num_mes in num_mes_vec:
 axs[1,2].set_yticklabels('')
 
 for _ in axs.flatten(): _.set_ylim([0,1.01])
-for _ in axs.flatten():_.set_xticks(N_vec)
+#for _ in axs.flatten():_.set_xticks(N_vec)
 
 #plt.savefig('power_N_freq.pdf', bbox_inches='tight')
 
