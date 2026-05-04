@@ -130,11 +130,8 @@ scenarios={'Drift':[int(1e3),0,0],
            'Fluctuating strong':[int(1e10),0,0.05],
            'Fluctuating weak':[int(1e10),0,0.01]}
 
-#%%
-#frequency permutation
+#%% frequency permutation roc
 ##################################
-
-#roc
 
 fig, axs=plt.subplots(2,1,figsize=[3,6])
 
@@ -169,9 +166,7 @@ axs[1].set_title(r'$n=100$',fontsize=10)
 
 #plt.savefig('roc_freq.pdf', bbox_inches='tight')
 
-
-#%%
-#Power vs N
+#%% Frequency power vs N
 
 fig, axs=plt.subplots(2,3,figsize=[6,4])
 
@@ -385,23 +380,24 @@ fig, axs=plt.subplots(2,3,figsize=[6,4])
 s_std=0
 N=10**4
 s_vec=np.array([1,2,5,10,20,50,100])/N
+num_mes_vec=[10,50]
 
 #No measurement error
 n_s=10**10
 #short trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(100/num_mes)
     axs[0,0].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
                  ,label=num_mes)
 
-axs[0,0].legend(fontsize=8)
+axs[0,0].legend(fontsize=8, loc='lower center')
 axs[0,0].set_ylabel('Power (short trajectory)')
 axs[0,0].set_title('No error',fontsize=10)
 axs[0,0].set_xticklabels('')
 
 #long trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
     axs[1,0].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
@@ -412,18 +408,19 @@ axs[1,0].set_ylabel('Power (long trajectory)')
 #n=1000
 n_s=1000
 #short trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(100/num_mes)
     axs[0,1].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
                  ,label='M'+str(num_mes))
 
-axs[0,1].set_title(r'$n=1000$',fontsize=10)
+#axs[0,1].set_title(r'$n=1000$',fontsize=10)
+axs[0,1].set_title(r'Modest mes. error',fontsize=10)
 axs[0,1].set_xticklabels('')
 axs[0,1].set_yticklabels('')
 
 #long trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
     axs[1,1].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
@@ -435,18 +432,18 @@ axs[1,1].set_yticklabels('')
 #n=100
 n_s=100
 #short trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(100/num_mes)
     axs[0,2].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
                  ,label=num_mes)
 
-axs[0,2].set_title(r'$n=100$',fontsize=10)
+axs[0,2].set_title(r'Large mes. error',fontsize=10)
 axs[0,2].set_xticklabels('')
 axs[0,2].set_yticklabels('')
 
 #long trajectory
-for num_mes in [10,20,50]:
+for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
     axs[1,2].plot(N*s_vec,
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
