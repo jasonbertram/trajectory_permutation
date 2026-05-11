@@ -171,8 +171,8 @@ axs[1].set_title(r'$n=100$',fontsize=10)
 fig, axs=plt.subplots(3,2,figsize=[3,6])
 
 p0=0.5
-num_traj=10
-s=0
+num_traj=1000
+s=j
 s_std=0
 N_vec=np.array([10**6, 10**5, 10**4, 10**3])
 num_mes_vec=[10,50]
@@ -193,7 +193,6 @@ num_mes_vec=[10,50]
 #                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec]
 #                 ,'--',label=str(num_mes)+' timepoints. Long.')
 #
-#axs[0].legend(fontsize=8, loc='lower center')
 #axs[0].set_ylabel('Power')
 #axs[0].set_title('No error',fontsize=10)
 
@@ -203,18 +202,20 @@ n_s=1000
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
     axs[0,0].semilogx(N_vec,
-                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec])
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec], 
+                    label=str(num_mes)+' points. Short.')
 
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
     axs[0,0].semilogx(N_vec,
-                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec], '--')
+                [power(perm_freq(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec], '--',
+                    label=str(num_mes)+' points. Long.')
 
 axs[0,0].set_title(r'$n=1000$',fontsize=10)
-axs[0,0].set_yticklabels('')
 axs[0,0].set_xlabel(r'$N$')
-axs[0,0].set_yticklabels('')
+axs[0,0].set_ylabel('Power')
+axs[0,0].annotate(r'$A$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 #n=100
 n_s=100
@@ -226,6 +227,8 @@ for num_mes in num_mes_vec:
 
 axs[0,1].set_title(r'$n=100$',fontsize=10)
 axs[0,1].set_yticklabels('')
+axs[0,1].set_xlabel(r'$N$')
+axs[0,1].annotate(r'$B$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 #long trajectory
 for num_mes in num_mes_vec:
@@ -238,93 +241,124 @@ axs[0,1].set_yticklabels('')
 for _ in axs.flatten(): _.set_ylim([0,1.01])
 for _ in axs.flatten():_.set_xticks(N_vec)
 
-#plt.savefig('power_N_freq.pdf', bbox_inches='tight')
+#Power vs s 
 
-#%%
-#Power vs s variance
-
-num_traj=1000
-
-fig, axs=plt.subplots(2,3,figsize=[6,4])
-
-s=0
-s_std=np.array([0,1e-3,1e-2,1e-1])
+s=np.array([0,1e-4,1e-3,1e-2,1e-1])
+s_std=0
 N=10**8
 num_mes_vec=[10,50]
-skip=4
 
-#No measurement error
-n_s=10**10
-
-#short trajectory
-for num_mes in num_mes_vec:
-    skip=int(100/num_mes)
-    axs[0,0].semilogx(s_std,
-               [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label=num_mes)
-
-axs[0,0].legend(fontsize=8)
-axs[0,0].set_ylabel('Power (short trajectory)')
-axs[0,0].set_title('No error',fontsize=10)
-
-#long trajectory
-for num_mes in num_mes_vec:
-    skip=int(1000/num_mes)
-    axs[1,0].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label=str(num_mes)+' timepoints')
-
-axs[1,0].set_ylabel('Power (long trajectory)')
+##No measurement error
+#n_s=10**10
+#
+##short trajectory
+#for num_mes in num_mes_vec:
+#    skip=int(100/num_mes)
+#    axs[0,0].semilogx(s_std,
+#               [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
+#                 ,label=num_mes)
+#
+#axs[0,0].legend(fontsize=8)
+#axs[0,0].set_ylabel('Power (short trajectory)')
+#axs[0,0].set_title('No error',fontsize=10)
+#
+##long trajectory
+#for num_mes in num_mes_vec:
+#    skip=int(1000/num_mes)
+#    axs[1,0].semilogx(s_std,
+#                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
+#                 ,label=str(num_mes)+' timepoints')
+#
+#axs[1,0].set_ylabel('Power (long trajectory)')
 
 #n=1000
 n_s=1000
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
-    axs[0,1].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label='M'+str(num_mes))
-
-#axs[0,1].set_title(r'$n=1000$',fontsize=10)
-axs[0,1].set_title(r'Modest mes. error',fontsize=10)
-axs[0,1].set_yticklabels('')
+    axs[1,0].semilogx(N*s,
+                [power(perm_freq(gen_traj(N,_,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s])
 
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
-    axs[1,1].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label=num_mes)
+    axs[1,0].semilogx(N*s,
+                [power(perm_freq(gen_traj(N,_,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s], '--')
 
-axs[1,1].set_xlabel(r'Population size $N$')
-axs[1,1].set_yticklabels('')
+axs[1,0].set_xlabel(r'$s$')
+axs[1,0].set_ylabel('Power')
+axs[1,0].annotate(r'$C$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 #n=100
 n_s=100
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
-    axs[0,2].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label=num_mes)
-
-#axs[0,2].set_title(r'$n=100$',fontsize=10)
-axs[0,2].set_title(r'Large mes. error',fontsize=10)
-axs[0,2].set_yticklabels('')
+    axs[1,1].semilogx(N*s,
+                [power(perm_freq(gen_traj(N,_,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s])
 
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
-    axs[1,2].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std]
-                 ,label=num_mes)
+    axs[1,1].semilogx(N*s,
+                [power(perm_freq(gen_traj(N,_,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s], '--')
 
-axs[1,2].set_yticklabels('')
+axs[1,1].set_yticklabels('')
+axs[1,1].set_xlabel(r'$s$')
+axs[1,1].annotate(r'$D$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
+
+#power vs s variance
+
+s=0
+s_std=np.array([0,1e-3,1e-2,1e-1])
+N=10**8
+num_mes_vec=[10,50]
+
+#n=1000
+n_s=1000
+#short trajectory
+for num_mes in num_mes_vec:
+    skip=int(100/num_mes)
+    axs[2,0].semilogx(s_std,
+                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std])
+
+#long trajectory
+for num_mes in num_mes_vec:
+    skip=int(1000/num_mes)
+    axs[2,0].semilogx(s_std,
+                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std], '--')
+
+axs[2,0].set_xlabel(r'$\sigma^2$')
+axs[2,0].set_ylabel('Power')
+axs[2,0].annotate(r'$E$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
+
+#n=100
+n_s=100
+#short trajectory
+for num_mes in num_mes_vec:
+    skip=int(100/num_mes)
+    axs[2,1].semilogx(s_std,
+                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std],
+                    label=str(num_mes)+' points. Short.')
+
+#long trajectory
+for num_mes in num_mes_vec:
+    skip=int(1000/num_mes)
+    axs[2,1].semilogx(s_std,
+                [power(perm_freq(gen_traj(N,s,sig,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std], '--',
+                    label=str(num_mes)+' points. Long.')
+
+axs[2,1].set_yticklabels('')
+axs[2,1].set_xlabel(r'$\sigma^2$')
+axs[2,1].annotate(r'$F$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 for _ in axs.flatten(): _.set_ylim([0,1.01])
-#for _ in axs.flatten():_.set_xticks(N_vec)
 
-plt.savefig('power_N_freq.pdf', bbox_inches='tight')
+axs[2,1].legend(fontsize=4, loc='upper left')
+
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.5)
+
+plt.savefig('power_freq.pdf', bbox_inches='tight')
 
 #%%
 #increment order permutation
@@ -385,7 +419,6 @@ for num_mes in num_mes_vec:
                 [power(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj)),0.05) for s in s_vec]
                  ,label=num_mes)
 
-axs[0,0].legend(fontsize=8, loc='lower center')
 axs[0,0].set_ylabel('Power (short trajectory)')
 axs[0,0].set_title('No error',fontsize=10)
 axs[0,0].set_xticklabels('')
@@ -446,6 +479,8 @@ for num_mes in num_mes_vec:
 axs[1,2].set_yticklabels('')
 
 for _ in axs.flatten(): _.set_ylim([0,1])
+
+
 
 plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
 
