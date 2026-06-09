@@ -542,6 +542,7 @@ num_mes=10
 skip=10
 num_traj=100
 p0=0.5
+small=False
 
 #N,s,s_std,inhomog_err
 scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
@@ -555,7 +556,7 @@ fig, axs=plt.subplots(3,1,figsize=[3,6])
 n_s=10**10
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
-    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,True)
+    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[0].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
@@ -566,7 +567,7 @@ axs[0].set_xticklabels('')
 n_s=1000
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
-    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,True)
+    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[1].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
@@ -579,7 +580,7 @@ axs[1].set_xticklabels('')
 n_s=100
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
-    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,True)
+    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[2].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
@@ -594,7 +595,7 @@ plt.savefig('roc_inc.pdf', bbox_inches='tight')
 
 num_mes=10
 skip=10
-num_traj=1000
+num_traj=100
 p0=0.5
 
 #N,s,s_std,inhomog_err
@@ -643,76 +644,118 @@ axs[2].set_title(r'$n=100$',fontsize=10)
 
 plt.savefig('roc_inc_negative.pdf', bbox_inches='tight')
 
-#%%
-#increment order permutation
-#########################
-
-num_traj=1000
-p0=0.5
-
-#transformation check
-fig, ax=plt.subplots(1,1,figsize=[3,3])
-
-N,s,s_std=[int(1e3),0,0]
-sig=0
-num_traj=10000
-sim=gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj)
-
-p_vals_null=perm_incr(sim,False)
-roc1=roc(p_vals_null,np.linspace(0,1,num_traj),100)
-ax.plot(roc1[:,0],roc1[:,1],label=r'Untransformed $\sigma_s^2=0$')
-
-p_vals_null=perm_incr(sim,True)
-roc1=roc(p_vals_null,np.linspace(0,1,num_traj),100)
-ax.plot(roc1[:,0],roc1[:,1],label=r'Transformed $\sigma_s^2=0$')
-
-s_std=0.05
-sim=gen_traj(N,s,s_std,p0,sig,skip,num_mes,num_traj)
-
-p_vals_null=perm_incr(sim,False)
-roc1=roc(p_vals_null,np.linspace(0,1,num_traj),100)
-ax.plot(roc1[:,0],roc1[:,1],label=r'Untransformed $\sigma_s^2=0.05$')
-
-p_vals_null=perm_incr(sim,True)
-roc1=roc(p_vals_null,np.linspace(0,1,num_traj),100)
-ax.plot(roc1[:,0],roc1[:,1],label=r'Transformed $\sigma_s^2=0.05$')
-ax.plot(np.linspace(0,1),np.linspace(0,1),'k--')
-
-ax.set_ylabel('Rate of positives')
-ax.set_xlabel('Significance level')
-ax.legend(fontsize=7)
-
-#plt.savefig('roc_inc_trans.pdf', bbox_inches='tight')
-#==================================================================
-#%%
-
-fig, axs=plt.subplots(2,2,figsize=[6,4])
+#%% increment permutation
+##################################
+fig, axs=plt.subplots(3,1,figsize=[3,6])
 
 s_std=0
 N=10**4
-s=0.01
-num_mes_vec=[50]
+s_vec=10*np.array([1,2,5,10,15,20,25,40,50,75,100])/N
+num_mes_vec=[10,50]
+num_traj=1000
+p0=0.5
+inhomog_err=0
+transform=False
 
 #No measurement error
 n_s=10**10
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
-    axs[0,0].hist(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj))
-                 ,label=num_mes)
+    axs[0].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                 ,label=str(num_mes)+' pts. Short')
 
-axs[0,0].set_ylabel('Power (short trajectory)')
-axs[0,0].set_title('No error',fontsize=10)
-axs[0,0].set_xticklabels('')
+axs[0].set_title('No error',fontsize=10)
+axs[0].set_xticklabels('')
 
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
-    axs[1,0].hist(perm_sign(gen_traj(N,s,s_std,p0,n_s,skip,num_mes,num_traj))
-                 ,label=num_mes)
+    axs[0].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                 ,'--',label=str(num_mes)+' pts. Long')
 
-axs[1,0].set_ylabel('Power (long trajectory)')
+n_s=1000
+#short trajectory
+for num_mes in num_mes_vec:
+    skip=int(100/num_mes)
+    axs[1].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                 )
 
+axs[1].set_title(r'$n=1000$',fontsize=10)
+axs[1].set_xticklabels('')
+axs[1].set_ylabel('Power ')
+
+#long trajectory
+for num_mes in num_mes_vec:
+    skip=int(1000/num_mes)
+    axs[1].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                 ,'--')
+
+#n=100
+n_s=100
+#short trajectory
+for num_mes in num_mes_vec:
+    skip=int(100/num_mes)
+    axs[2].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                ) 
+
+axs[2].set_title(r'$n=100$',fontsize=10)
+
+#long trajectory
+for num_mes in num_mes_vec:
+    skip=int(1000/num_mes)
+    axs[2].plot(N*s_vec,
+                [power(
+                    perm_incr(
+                        gen_traj(
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            )
+                            ,transform,True)
+                            ,0.05) for s in s_vec]
+                 ,'--')
+
+axs[2].set_xlabel(r'$Ns$')
+
+for _ in axs.flatten(): _.set_ylim([0,1])
+
+axs[0].legend(fontsize=6, loc='lower right')
+#
+#plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
 
 #=========================================================================
 #%%
