@@ -195,10 +195,10 @@ fig, axs=plt.subplots(3,2,figsize=[3,6])
 
 p0=0.5
 num_traj=1000
-s=j
+s=0
 s_std=0
 inhomog_err=0
-N_vec=np.array([10**6, 10**5, 10**4, 10**3])
+N_vec=np.array([10**6, 5*10**5, 10**5, 5*10**4, 10**4, 5*10**3, 10**3])
 num_mes_vec=[10,50]
 
 
@@ -249,7 +249,7 @@ for _ in axs.flatten():_.set_xticks(N_vec)
 
 #Power vs s 
 
-s=np.array([0,1e-4,1e-3,1e-2,1e-1])
+s=np.array([0,1e-4,5e-4,1e-3,5e-3,1e-2,5e-2,1e-1])
 s_std=0
 N=10**8
 num_mes_vec=[10,50]
@@ -292,7 +292,7 @@ axs[1,1].annotate(r'$D$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 #power vs s variance
 s=0
-s_std=np.array([0,1e-3,1e-2,1e-1])
+s_std=np.array([0,1e-3,5e-3,1e-2,5e-2,1e-1])
 N=10**8
 num_mes_vec=[10,50]
 
@@ -754,8 +754,8 @@ axs[2].set_xlabel(r'$Ns$')
 for _ in axs.flatten(): _.set_ylim([0,1])
 
 axs[0].legend(fontsize=6, loc='lower right')
-#
-#plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
+
+plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
 #=========================================================================
 #%%
