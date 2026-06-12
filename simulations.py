@@ -672,8 +672,10 @@ for num_mes in num_mes_vec:
                             ,0.05) for s in s_vec]
                  ,label=str(num_mes)+' pts. Short')
 
-axs[0].set_title('No error',fontsize=10)
-axs[0].set_xticklabels('')
+#axs[0].set_title('No error',fontsize=10)
+axs[0].set_xlabel(r'$N|s|$')
+axs[0].set_ylabel(r'Power')
+axs[0].annotate(r'$A$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 #long trajectory
 for num_mes in num_mes_vec:
@@ -688,73 +690,77 @@ for num_mes in num_mes_vec:
                             ,0.05) for s in s_vec]
                  ,'--',label=str(num_mes)+' pts. Long')
 
-n_s=1000
+
+n_s=np.array([100000,10000,1000,100])
+s=0.01
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
-    axs[1].plot(N*s_vec,
+    axs[1].semilogx(n_s,
                 [power(
                     perm_incr(
                         gen_traj(
-                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,_,skip,num_mes,num_traj
                             )
                             ,transform,True)
-                            ,0.05) for s in s_vec]
+                            ,0.05) for _ in n_s]
                  )
 
-axs[1].set_title(r'$n=1000$',fontsize=10)
-axs[1].set_xticklabels('')
-axs[1].set_ylabel('Power ')
-
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
-    axs[1].plot(N*s_vec,
+    axs[1].semilogx(n_s,
                 [power(
                     perm_incr(
                         gen_traj(
-                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,_,skip,num_mes,num_traj
                             )
                             ,transform,True)
-                            ,0.05) for s in s_vec]
+                            ,0.05) for _ in n_s]
                  ,'--')
 
-#n=100
-n_s=100
+#axs[1].set_title(r'$n=1000$',fontsize=10)
+axs[1].set_ylabel('Rate of positives')
+axs[1].set_xlabel(r'$n$')
+axs[1].annotate(r'$B$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
+
+s=0.0
 #short trajectory
 for num_mes in num_mes_vec:
     skip=int(100/num_mes)
-    axs[2].plot(N*s_vec,
+    axs[2].semilogx(n_s,
                 [power(
                     perm_incr(
                         gen_traj(
-                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,_,skip,num_mes,num_traj
                             )
                             ,transform,True)
-                            ,0.05) for s in s_vec]
-                ) 
-
-axs[2].set_title(r'$n=100$',fontsize=10)
+                            ,0.05) for _ in n_s]
+                 )
 
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
-    axs[2].plot(N*s_vec,
+    axs[2].semilogx(n_s,
                 [power(
                     perm_incr(
                         gen_traj(
-                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj
+                            N,np.array([s*(-1)**np.floor(t/skip) for t in range(num_mes*skip)]),s_std,inhomog_err,p0,_,skip,num_mes,num_traj
                             )
                             ,transform,True)
-                            ,0.05) for s in s_vec]
+                            ,0.05) for _ in n_s]
                  ,'--')
 
-axs[2].set_xlabel(r'$Ns$')
+#axs[1].set_title(r'$n=1000$',fontsize=10)
+axs[2].set_ylabel('Rate of positives')
+axs[2].set_xlabel(r'$n$')
+axs[2].annotate(r'$C$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
 
 for _ in axs.flatten(): _.set_ylim([0,1])
 
 axs[0].legend(fontsize=6, loc='lower right')
 
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.4)
 plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
 #=========================================================================
