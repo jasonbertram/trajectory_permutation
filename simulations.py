@@ -135,7 +135,7 @@ def gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,numtraj):
 
     #sampling error 
     if inhomog_err:
-        sample_sizes=np.random.exponential(n_s,np.int64(T/skip))
+        sample_sizes=np.array(np.random.poisson(n_s,np.int64(T/skip)),dtype=int)
         p=np.random.binomial(sample_sizes,p[:,0:T:skip])/n_s
     else:
         p=np.random.binomial(n_s,p[:,0:T:skip])/n_s
@@ -149,9 +149,8 @@ def gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,numtraj):
 scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
            'Directional $s=10^{-3}$':[int(1e10),0.001,0,0],
            'Directional $s=10^{-2}$':[int(1e10),0.01,0,0],
-           'Fluctuating $\sigma^2=10^{-3}$':[int(1e10),0,0.001,0],
            'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
-           'Inhomog. Err.':[int(1e10),0,0.01,1]}
+           'Inhomog. Err.':[int(1e10),0.0,0,1]}
 
 fig, axs=plt.subplots(2,1,figsize=[3,6])
 
