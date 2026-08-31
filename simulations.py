@@ -581,7 +581,7 @@ plt.savefig('roc_inc_negative.pdf', bbox_inches='tight')
 
 #%% increment permutation
 ##################################
-fig, axs=plt.subplots(3,1,figsize=[3,6])
+fig, axs=plt.subplots(3,1,figsize=[3,6],constrained_layout=True)
 
 s_std=0
 N=10**4
@@ -692,118 +692,12 @@ for _ in axs.flatten(): _.set_ylim([0,1])
 
 axs[0].legend(fontsize=6, loc='lower right')
 
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.4)
+for ax, label in zip(axs.flat, 'abc'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
+
 plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
-#%% Frequency power Lynch et al.
-##################################
-
-fig, axs=plt.subplots(3,2,figsize=[3,6])
-
-p0=0.5
-num_traj=100
-s=0
-s_std=0
-inhomog_err=0
-N_vec=np.array([10**6, 5*10**5, 10**5, 5*10**4, 10**4, 5*10**3, 10**3])
-num_mes_vec=[10]
-skip=1
-
-
-#n=1000
-n_s=1000
-#short trajectory
-for num_mes in num_mes_vec:
-    axs[0,0].semilogx(N_vec,
-                [power(perm_freq(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec], 
-                    label=str(num_mes)+' pts. Short.')
-
-
-axs[0,0].set_title(r'$n=1000$',fontsize=10)
-axs[0,0].set_xlabel(r'$N$')
-axs[0,0].set_ylabel('Power')
-axs[0,0].annotate(r'$A$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-
-#n=100
-n_s=100
-#short trajectory
-for num_mes in num_mes_vec:
-    axs[0,1].semilogx(N_vec,
-                [power(perm_freq(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec])
-
-axs[0,1].set_title(r'$n=100$',fontsize=10)
-axs[0,1].set_yticklabels('')
-axs[0,1].set_xlabel(r'$N$')
-axs[0,1].annotate(r'$B$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-axs[0,1].set_yticklabels('')
-
-for _ in axs.flatten(): _.set_ylim([0,1.01])
-for _ in axs.flatten():_.set_xticks(N_vec)
-
-#Power vs s 
-
-s=np.array([0,1e-4,5e-4,1e-3,5e-3,1e-2,5e-2,1e-1])
-s_std=0
-N=10**8
-
-#n=1000
-n_s=1000
-#short trajectory
-for num_mes in num_mes_vec:
-    axs[1,0].semilogx(s,
-                [power(perm_freq(gen_traj(N,_,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s])
-
-axs[1,0].set_xlabel(r'$s$')
-axs[1,0].set_ylabel('Power')
-axs[1,0].annotate(r'$C$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-
-#n=100
-n_s=100
-#short trajectory
-for num_mes in num_mes_vec:
-    skip=int(100/num_mes)
-    axs[1,1].semilogx(s,
-                [power(perm_freq(gen_traj(N,_,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for _ in s])
-
-
-axs[1,1].set_yticklabels('')
-axs[1,1].set_xlabel(r'$s$')
-axs[1,1].annotate(r'$D$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-
-#power vs s variance
-s=0
-s_std=np.array([0,1e-3,5e-3,1e-2,5e-2,1e-1])
-N=10**8
-
-#n=1000
-n_s=1000
-#short trajectory
-for num_mes in num_mes_vec:
-    axs[2,0].semilogx(s_std,
-                [powerperm_freq(gen_traj(N,s,sig,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std])
-
-axs[2,0].set_xlabel(r'$\sigma^2$')
-axs[2,0].set_ylabel('Power')
-axs[2,0].annotate(r'$E$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-
-#n=100
-n_s=100
-#short trajectory
-for num_mes in num_mes_vec:
-    axs[2,1].semilogx(s_std,
-                [power(perm_freq(gen_traj(N,s,sig,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for sig in s_std],
-                    label=str(num_mes)+' pts. Short.')
-
-
-axs[2,1].set_yticklabels('')
-axs[2,1].set_xlabel(r'$\sigma^2$')
-axs[2,1].annotate(r'$F$',[0.85,0.84],xycoords='axes fraction',fontsize=14)
-
-for _ in axs.flatten(): _.set_ylim([0,1.01])
-
-axs[2,1].legend(fontsize=5, loc='upper left')
-
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.4)
 
 ##=========================================================================
 ##%%
