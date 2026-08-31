@@ -223,7 +223,6 @@ for num_mes in num_mes_vec:
                 [power(perm_freq(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec], '--',
                     label=str(num_mes)+' pts. Long.')
 
-#axs[0,0].set_title(r'$n=1000$',fontsize=10)
 axs[0,0].set_xlabel(r'$N$')
 axs[0,0].set_ylabel('Power')
 
@@ -235,7 +234,6 @@ for num_mes in num_mes_vec:
     axs[0,1].semilogx(N_vec,
                 [power(perm_freq(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj)),0.05) for N in N_vec])
 
-#axs[0,1].set_title(r'$n=100$',fontsize=10)
 axs[0,1].set_yticklabels('')
 axs[0,1].set_xlabel(r'$N$')
 
@@ -354,9 +352,8 @@ scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
            'Directional $s=10^{-2}$':[int(1e10),0.01,0,0],
            'Fluctuating $\sigma^2=10^{-3}$':[int(1e10),0,0.001,0],
            'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0]}
-           #'Inhomog. Err.':[int(1e10),0,0.01,1]}
 
-fig, axs=plt.subplots(3,1,figsize=[3,6])
+fig, axs=plt.subplots(3,1,figsize=[3,6],constrained_layout=True)
 
 p0=0.5
 num_mes=10
@@ -367,39 +364,35 @@ n_s=10**10
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
     p_vals=perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False)
-    #p_vals=binomial_test(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj))
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[0].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
 axs[0].legend(fontsize=5.5)
 axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-axs[0].set_title(r'No error',fontsize=10)
-axs[0].set_xticklabels('')
 
 n_s=1000
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
     p_vals=perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False)
-    #p_vals=binomial_test(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj))
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[1].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
 axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[1].set_ylabel('Rate of positives')
-axs[1].set_title(r'$n=1000$',fontsize=10)
-axs[1].set_xticklabels('')
 
 n_s=100
 for _ in scenarios:
     N,s,s_std,inhomog_err=scenarios[_]
     p_vals=perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False)
-    #p_vals=binomial_test(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj))
     roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
     axs[2].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
 
 axs[2].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[2].set_xlabel('Significance level')
-axs[2].set_title(r'$n=100$',fontsize=10)
+
+for ax, label in zip(axs.flat, 'abc'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
 
 plt.savefig('roc_sign.pdf', bbox_inches='tight')
 
@@ -414,7 +407,7 @@ scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
            'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
            'Neg. Corr.':[int(1e10), np.array([0.001*(-1)**np.floor(t/10) for t in range(num_mes*skip)]), 0, 0]}
 
-fig, axs=plt.subplots(3,1,figsize=[3,6])
+fig, axs=plt.subplots(3,1,figsize=[3,6],constrained_layout=True)
 
 p0=0.5
 num_mes=10
@@ -431,8 +424,6 @@ for _ in scenarios:
 
 axs[0].legend(fontsize=5.5)
 axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-axs[0].set_title(r'No error',fontsize=10)
-axs[0].set_xticklabels('')
 
 n_s=1000
 for _ in scenarios:
@@ -444,8 +435,6 @@ for _ in scenarios:
 
 axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[1].set_ylabel('Rate of positives')
-axs[1].set_title(r'$n=1000$',fontsize=10)
-axs[1].set_xticklabels('')
 
 n_s=100
 for _ in scenarios:
@@ -457,14 +446,17 @@ for _ in scenarios:
 
 axs[2].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[2].set_xlabel('Significance level')
-axs[2].set_title(r'$n=100$',fontsize=10)
+
+for ax, label in zip(axs.flat, 'abc'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
 
 plt.savefig('roc_sign_negative.pdf', bbox_inches='tight')
 
 #%% sign permutation
 ##################################
 #Comparison with Feder et al. 2014 
-fig, axs=plt.subplots(3,1,figsize=[3,6])
+fig, axs=plt.subplots(3,1,figsize=[3,6], constrained_layout=True)
 
 s_std=0
 N=10**4
@@ -482,9 +474,6 @@ for num_mes in num_mes_vec:
                 [power(perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False),0.05) for s in s_vec]
                  ,label=str(num_mes)+' pts. Short.')
 
-axs[0].set_title('No error',fontsize=10)
-axs[0].set_xticklabels('')
-
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
@@ -500,8 +489,6 @@ for num_mes in num_mes_vec:
                 [power(perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False),0.05) for s in s_vec]
                  ,label='M'+str(num_mes))
 
-axs[1].set_title(r'$n=1000$',fontsize=10)
-axs[1].set_xticklabels('')
 axs[1].set_ylabel('Power ')
 
 #long trajectory
@@ -519,8 +506,6 @@ for num_mes in num_mes_vec:
                 [power(perm_sign(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False),0.05) for s in s_vec]
                  ,label=num_mes)
 
-axs[2].set_title(r'$n=100$',fontsize=10)
-
 #long trajectory
 for num_mes in num_mes_vec:
     skip=int(1000/num_mes)
@@ -534,63 +519,12 @@ for _ in axs.flatten(): _.set_ylim([0,1])
 
 axs[0].legend(fontsize=6, loc='lower right')
 
+for ax, label in zip(axs.flat, 'abc'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
+
 plt.savefig('power_NS_sign.pdf', bbox_inches='tight')
 
-#%% increment permutation roc
-##################################
-#Not used in manuscript
-
-#num_mes=10
-#skip=10
-#num_traj=100
-#p0=0.5
-#small=False
-#
-##N,s,s_std,inhomog_err
-#scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
-#           'Directional $s=10^{-3}$':[int(1e10),0.001,0,0],
-#           'Directional $s=10^{-2}$':[int(1e10),0.01,0,0],
-#           'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
-#           'Neg. Corr.':[int(1e10), np.array([0.001*(-1)**np.floor(t/10) for t in range(num_mes*skip)]), 0, 0]}
-#
-#fig, axs=plt.subplots(3,1,figsize=[3,6])
-#
-#n_s=10**10
-#for _ in scenarios:
-#    N,s,s_std,inhomog_err=scenarios[_]
-#    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
-#    roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
-#    axs[0].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
-#
-#axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-#axs[0].set_title(r'No error',fontsize=10)
-#axs[0].set_xticklabels('')
-#
-#n_s=1000
-#for _ in scenarios:
-#    N,s,s_std,inhomog_err=scenarios[_]
-#    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
-#    roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
-#    axs[1].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
-#
-#axs[1].legend(fontsize=5.5,loc='lower right')
-#axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-#axs[1].set_ylabel('Rate of positives')
-#axs[1].set_title(r'$n=1000$',fontsize=10)
-#axs[1].set_xticklabels('')
-#
-#n_s=100
-#for _ in scenarios:
-#    N,s,s_std,inhomog_err=scenarios[_]
-#    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),False,small)
-#    roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
-#    axs[2].plot(roc1[:,0],roc1[:,1],label=_,linewidth=2)
-#
-#axs[2].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-#axs[2].set_xlabel('Significance level')
-#axs[2].set_title(r'$n=100$',fontsize=10)
-#
-#plt.savefig('roc_inc.pdf', bbox_inches='tight')
 
 #%% increment permutation roc negative
 ##################################
@@ -607,7 +541,7 @@ scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
            'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
            'Neg. Corr.':[int(1e10), np.array([0.001*(-1)**np.floor(t/10) for t in range(num_mes*skip)]), 0, 0]}
 
-fig, axs=plt.subplots(3,1,figsize=[3,6])
+fig, axs=plt.subplots(3,1,figsize=[3,6],constrained_layout=True)
 
 n_s=10**10
 for _ in scenarios:
@@ -618,8 +552,6 @@ for _ in scenarios:
 
 axs[0].legend(fontsize=5.5)
 axs[0].plot(np.linspace(0,1),np.linspace(0,1),'k--')
-axs[0].set_title(r'No error',fontsize=10)
-axs[0].set_xticklabels('')
 
 n_s=1000
 for _ in scenarios:
@@ -630,8 +562,6 @@ for _ in scenarios:
 
 axs[1].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[1].set_ylabel('Rate of positives')
-axs[1].set_title(r'$n=1000$',fontsize=10)
-axs[1].set_xticklabels('')
 
 n_s=100
 for _ in scenarios:
@@ -642,7 +572,10 @@ for _ in scenarios:
 
 axs[2].plot(np.linspace(0,1),np.linspace(0,1),'k--')
 axs[2].set_xlabel('Significance level')
-axs[2].set_title(r'$n=100$',fontsize=10)
+
+for ax, label in zip(axs.flat, 'abc'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
 
 plt.savefig('roc_inc_negative.pdf', bbox_inches='tight')
 
