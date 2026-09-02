@@ -579,6 +579,46 @@ for ax, label in zip(axs.flat, 'abc'):
 
 plt.savefig('roc_inc_negative.pdf', bbox_inches='tight')
 
+#%% increment permutation transformation test
+##################################
+
+num_mes=10
+skip=10
+num_traj=1000
+p0=0.2
+
+#N,s,s_std,inhomog_err
+scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
+           'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
+           'Directional $s=10^{-2}$':[int(1e10),0.01,0,0]}#,
+           #'Neg. Corr.':[int(1e10), np.array([0.001*(-1)**np.floor(t/10) for t in range(num_mes*skip)]), 0, 0]}
+
+fig, ax=plt.subplots(1,1,figsize=[3,3])
+
+n_s=10**3
+transformed=False
+for _ in scenarios:
+    N,s,s_std,inhomog_err=scenarios[_]
+    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),transformed,True)
+    roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
+    ax.plot(roc1[:,0],roc1[:,1],label="Untransformed "+_,linewidth=2)
+
+n_s=10**3
+transformed=True
+for _ in scenarios:
+    N,s,s_std,inhomog_err=scenarios[_]
+    p_vals=perm_incr(gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,num_traj),transformed,True)
+    roc1=roc(np.linspace(0,1,num_traj), p_vals, 200)
+    ax.plot(roc1[:,0],roc1[:,1],'--',label="Transformed "+_,linewidth=2)
+
+ax.set_xlabel('Significance level')
+ax.set_ylabel('Rate of positives')
+
+ax.legend(fontsize=5.5)
+ax.plot(np.linspace(0,1),np.linspace(0,1),'k--')
+ 
+plt.savefig('roc_inc_trans.pdf', bbox_inches='tight')
+
 #%% increment permutation
 ##################################
 fig, axs=plt.subplots(3,1,figsize=[3,6],constrained_layout=True)
@@ -699,8 +739,10 @@ for ax, label in zip(axs.flat, 'abc'):
 plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
 
+
+
 ##=========================================================================
-##%%
+#%%
 ##pvalue merge functions with dependence but assuming exchangeability
 ##Gasparin et al 2025 PNAS.
 #
