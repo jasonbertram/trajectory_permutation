@@ -589,8 +589,8 @@ p0=0.2
 
 #N,s,s_std,inhomog_err
 scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
-           'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
-           'Directional $s=10^{-2}$':[int(1e10),0.01,0,0]}#,
+           r'Fluctuating $\sigma^2=10^{-2}$':[int(1e10),0,0.01,0],
+           r'Directional $s=10^{-2}$':[int(1e10),0.01,0,0]}#,
            #'Neg. Corr.':[int(1e10), np.array([0.001*(-1)**np.floor(t/10) for t in range(num_mes*skip)]), 0, 0]}
 
 fig, ax=plt.subplots(1,1,figsize=[3,3])
