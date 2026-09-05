@@ -22,6 +22,7 @@ def perm_freq(trajectories):
     T=len(trajectories[0])
     for i,p in enumerate(trajectories):
         if T>8: #do exact test for trajectories <= 8 points long
+            print(sample_size)
             perm_p=np.array([np.random.permutation(p) for _ in range(sample_size)])
             perm_p[0]=p
         else:
@@ -738,8 +739,27 @@ for ax, label in zip(axs.flat, 'abc'):
 
 plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
+#%% Permutation number dependence
+##################################
 
+N=10**4
+s=0
+s_std=0
+inhomog_err=False
+p0=0.5
+n_s=1000
+skip=10
+num_mes=10
+numtraj=1
 
+traj=gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,numtraj)
+
+sizes=[100,1000,10000,20000,50000,100000]
+min_p=np.zeros(len(sizes))
+for i,sample_size in enumerate(sizes):
+    min_p[i]=np.min(perm_freq(traj))
+
+plt.plot(sizes,min_p)
 
 ##=========================================================================
 #%%
