@@ -21,19 +21,25 @@ def perm_freq(trajectories):
     p_vals=np.zeros(len(trajectories))
     T=len(trajectories[0])
     for i,p in enumerate(trajectories):
+        print(i)
         if T>8: #do exact test for trajectories <= 8 points long
-            print(sample_size)
             perm_p=np.array([np.random.permutation(p) for _ in range(sample_size)])
             perm_p[0]=p
+            pval=perm_freq_pval_calc(perm_p,p)
+            #if pvalue is at sample size threshold, do exact pvalue calculation
+            if pval==1/sample_size:
+                perm_p=np.array([_ for _ in itertools.permutations(p)])
         else:
             perm_p=np.array([_ for _ in itertools.permutations(p)])
+
+        p_vals[i]=perm_freq_pval_calc(perm_p,p)
+    return p_vals
+
+def perm_freq_pval_calc(perm_p,p):
         dp=np.diff(perm_p)
         d_perm=np.mean(np.abs(dp),1) #average increment magnitude
         d_obs=np.mean(np.abs(np.diff(p)))
-        #compute pvalue (observed unusually small) 
-        p_vals[i]=np.sum(d_perm<=d_obs)/len(d_perm) 
-        #p_vals[i]=np.sum((d_perm<d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
-    return p_vals
+        return np.sum(d_perm<=d_obs)/len(d_perm) #compute pvalue (observed unusually small) 
 
 def perm_incr(trajectories,transform,small):
     p_vals=np.zeros(len(trajectories))
@@ -750,16 +756,20 @@ p0=0.5
 n_s=1000
 skip=10
 num_mes=10
-numtraj=1
+numtraj=1000
 
 traj=gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,numtraj)
 
-sizes=[100,1000,10000,20000,50000,100000]
+sizes=[100000]
 min_p=np.zeros(len(sizes))
 for i,sample_size in enumerate(sizes):
-    min_p[i]=np.min(perm_freq(traj))
+    #min_p[i]=np.min(perm_freq(traj))
+    plt.figure()
+    plt.axhline(1/sample_size,c='k')
+    plt.plot(np.sort(perm_freq(traj)))
 
-plt.plot(sizes,min_p)
+plt.figure()
+#plt.plot(sizes,min_p)
 
 ##=========================================================================
 #%%
