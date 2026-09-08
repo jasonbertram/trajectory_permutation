@@ -1,8 +1,9 @@
 import numpy as np
 import itertools
+import multiprocessing as mp
 
 #sample size for permuting long trajectories
-sample_size=10000
+sample_size=100000
 
 def roc(pvals1,pvals2,n):
     """Receiver operating characteristic"""
@@ -14,29 +15,53 @@ def power(pvals,alph):
     """Receiver operating characteristic"""
     return np.sum(pvals<=alph)/len(pvals)
 
-def perm_freq(trajectories):
-    p_vals=np.zeros(len(trajectories))
-    T=len(trajectories[0])
-    for i,p in enumerate(trajectories):
-        print(i)
-        if T>8: #do exact test for trajectories <= 8 points long
-            perm_p=np.array([np.random.permutation(p) for _ in range(sample_size)])
-            perm_p[0]=p
-            pval=perm_freq_pval_calc(perm_p,p)
-            #if pvalue is at sample size threshold, do exact pvalue calculation
-            if pval==1/sample_size:
-                perm_p=np.array([_ for _ in itertools.permutations(p)])
-        else:
-            perm_p=np.array([_ for _ in itertools.permutations(p)])
-
-        p_vals[i]=perm_freq_pval_calc(perm_p,p)
-    return p_vals
 
 def perm_freq_pval_calc(perm_p,p):
         dp=np.diff(perm_p)
         d_perm=np.mean(np.abs(dp),1) #average increment magnitude
         d_obs=np.mean(np.abs(np.diff(p)))
         return np.sum(d_perm<=d_obs)/len(d_perm) #compute pvalue (observed unusually small) 
+
+def perm_freq_one(args):
+    idx, traj, sample_size, seed = args
+    rng = np.random.default_rng(seed)
+
+    T=len(traj)
+    if T>8: #do exact test for trajectories <= 8 points long
+        rng = np.random.default_rng()
+        perm_p = rng.permuted(np.tile(traj, (sample_size, 1)), axis=1)
+        #perm_p=np.array([np.random.permutation(traj) for _ in range(sample_size)]) #old version. much slower 
+        perm_p[0]=traj
+        pval=perm_freq_pval_calc(perm_p,traj)
+        #if pvalue is above sample size threshold keep it, otherwise fall through to exact calculation
+        if pval>1/sample_size:
+            return idx, pval
+
+    perm_p=np.array([_ for _ in itertools.permutations(traj)])
+
+    #idx needed to track pvalue identity (multiprocessing with imap_unordered won't wait for slower pvals so ordering must be tracked)
+    return idx, perm_freq_pval_calc(perm_p,traj) 
+
+def perm_freq(trajectories):
+    seeds = np.random.SeedSequence().spawn(len(trajectories))
+    tasks = [(i, t, sample_size, s)
+         for i, (t, s) in enumerate(zip(trajectories, seeds))]
+
+    p_vals=np.zeros(len(trajectories))
+
+    #only using 10 cores to limit impact on memory
+    with mp.Pool(processes=10) as pool:
+        results = pool.imap_unordered(perm_freq_one, tasks)
+        from tqdm import tqdm
+        results = tqdm(results, total=len(tasks))
+
+        for idx, pval in results:
+            p_vals[idx] = pval
+        pool.close()
+        pool.join()
+
+    return p_vals
+
 
 def perm_incr(trajectories,transform,small):
     p_vals=np.zeros(len(trajectories))
