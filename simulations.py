@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
-import functions.py
+from functions import *
+import numpy as np
 #%% frequency permutation roc
 ##################################
 

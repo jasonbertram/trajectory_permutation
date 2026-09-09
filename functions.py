@@ -15,12 +15,11 @@ def power(pvals,alph):
     """Receiver operating characteristic"""
     return np.sum(pvals<=alph)/len(pvals)
 
-
 def perm_freq_pval_calc(perm_p,p):
         dp=np.diff(perm_p)
         d_perm=np.mean(np.abs(dp),1) #average increment magnitude
         d_obs=np.mean(np.abs(np.diff(p)))
-        return np.sum(d_perm<=d_obs)/len(d_perm) #compute pvalue (observed unusually small) 
+        return np.sum( (d_perm<=d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
 
 def perm_freq_one(args):
     idx, traj, sample_size, seed = args
@@ -36,8 +35,12 @@ def perm_freq_one(args):
         #if pvalue is above sample size threshold keep it, otherwise fall through to exact calculation
         if pval>1/sample_size:
             return idx, pval
-
-    perm_p=np.array([_ for _ in itertools.permutations(traj)])
+    
+    #safety catch to prevent exact test from hanging if the number of permutations is unmanageable 
+    if T<15:
+        perm_p=np.array([_ for _ in itertools.permutations(traj)])
+    else:
+        perm_p = rng.permuted(np.tile(traj, (int(1e6), 1)), axis=1) #simply do a much bigger number of samples instead
 
     #idx needed to track pvalue identity (multiprocessing with imap_unordered won't wait for slower pvals so ordering must be tracked)
     return idx, perm_freq_pval_calc(perm_p,traj) 
@@ -49,8 +52,7 @@ def perm_freq(trajectories):
 
     p_vals=np.zeros(len(trajectories))
 
-    #only using 10 cores to limit impact on memory
-    with mp.Pool(processes=10) as pool:
+    with mp.Pool(processes=16) as pool:
         results = pool.imap_unordered(perm_freq_one, tasks)
         from tqdm import tqdm
         results = tqdm(results, total=len(tasks))
@@ -62,7 +64,7 @@ def perm_freq(trajectories):
 
     return p_vals
 
-
+#not run on data so not parallelized or able to handle different trajectory lengths
 def perm_incr(trajectories,transform,small):
     p_vals=np.zeros(len(trajectories))
     T=len(trajectories[0])-1
@@ -93,10 +95,10 @@ def perm_incr(trajectories,transform,small):
 
         if small:
             #unusually small
-            p_vals[i]=np.sum(d_perm<=d_obs)/len(d_perm) # | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
+            p_vals[i]=np.sum( (d_perm<=d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
         else:
             #unusually large
-            p_vals[i]=np.sum(d_perm>=d_obs)/len(d_perm) # | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
+            p_vals[i]=np.sum( (d_perm>=d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
 
     return p_vals
 
@@ -113,25 +115,22 @@ def reconstruct_transformed(dp,p0):
 
 def perm_sign(trajectories,small):
     p_vals=np.zeros(len(trajectories))
-    T=len(trajectories[0])-1
-    #sign permutation matrix
-    if T>13: #do exact test for trajectories <= 12 points long
-        sgn_prm=np.array([2*np.random.randint(2,size=T)-1 for _ in range(sample_size) ])
-        sgn_prm[0]=np.ones(T)
-    else:
-        sgn_prm=np.array(list(itertools.product([-1,1], repeat=T))) 
 
-    for i,p in enumerate(trajectories):
+    from tqdm import tqdm
+    for i,p in tqdm(enumerate(trajectories)):
+        T=len(p)-1
+        #sign permutation matrix. can afford to always do exact for trajectory lengths considered here
+        sgn_prm=np.array(list(itertools.product([-1,1], repeat=T))) 
         dp=np.diff(p)
         d_perm=np.abs(np.sum(sgn_prm*dp, axis=1))
 
         d_obs=np.abs(p[0]-p[-1])
         if small:
             #unusually small
-            p_vals[i]=np.sum(d_perm<=d_obs)/len(d_perm) # | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
+            p_vals[i]=np.sum((d_perm<=d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
         else:
             #unusually large
-            p_vals[i]=np.sum(d_perm>=d_obs)/len(d_perm) # | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
+            p_vals[i]=np.sum((d_perm>=d_obs) | np.isclose(d_perm,d_obs,rtol=0,atol=10**-15))/len(d_perm) 
 
     return p_vals
 
