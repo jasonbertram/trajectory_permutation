@@ -320,6 +320,7 @@ num_mes_vec=[10,50]
 num_traj=1000
 p0=0.5
 inhomog_err=0
+sample_size=10000 #do not need accurate small p-values for this figure
 
 #No measurement error
 n_s=10**10

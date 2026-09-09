@@ -116,11 +116,22 @@ def reconstruct_transformed(dp,p0):
 def perm_sign(trajectories,small):
     p_vals=np.zeros(len(trajectories))
 
+    T_old=len(trajectories[0])-1
+
     from tqdm import tqdm
     for i,p in tqdm(enumerate(trajectories)):
         T=len(p)-1
-        #sign permutation matrix. can afford to always do exact for trajectory lengths considered here
-        sgn_prm=np.array(list(itertools.product([-1,1], repeat=T))) 
+        #sign permutation matrix. 
+        #only rebuild if length changes
+        if T != T_old or i==0:
+            if T>13: #do exact test for trajectories <= 12 points long
+                sgn_prm=np.array([2*np.random.randint(2,size=T)-1 for _ in range(sample_size) ])
+                sgn_prm[0]=np.ones(T)
+            else:
+                sgn_prm=np.array(list(itertools.product([-1,1], repeat=T))) 
+
+            T_old=T
+
         dp=np.diff(p)
         d_perm=np.abs(np.sum(sgn_prm*dp, axis=1))
 
