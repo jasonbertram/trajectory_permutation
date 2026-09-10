@@ -68,14 +68,17 @@ def perm_freq(trajectories):
 def perm_incr(trajectories,transform,small):
     p_vals=np.zeros(len(trajectories))
     T=len(trajectories[0])-1
-    for i,p in enumerate(trajectories):
+
+    from tqdm import tqdm
+    for i,p in tqdm(enumerate(trajectories)):
         
         dp=np.diff(p)
         if transform==True:
             dp=dp/(p[:-1]*(1-p[:-1]))
 
         if T>8: #do exact test for trajectories <= 9 points long
-            perm_dp=np.array([np.random.permutation(dp) for _ in range(sample_size)])
+            rng = np.random.default_rng()
+            perm_dp = rng.permuted(np.tile(dp, (sample_size, 1)), axis=1)
             perm_dp[0]=dp
         else:
             perm_dp=np.array([_ for _ in itertools.permutations(dp)])

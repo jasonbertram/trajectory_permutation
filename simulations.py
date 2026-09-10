@@ -390,6 +390,7 @@ num_mes=10
 skip=10
 num_traj=1000
 p0=0.5
+sample_size=10000
 
 #N,s,s_std,inhomog_err
 scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
@@ -443,6 +444,7 @@ num_mes=10
 skip=10
 num_traj=1000
 p0=0.2
+sample_size=10000
 
 #N,s,s_std,inhomog_err
 scenarios={r'Drift $N=10^3$':[int(1e3),0,0,0],
@@ -488,6 +490,7 @@ num_traj=1000
 p0=0.5
 inhomog_err=0
 transform=False
+sample_size=10000
 
 #No measurement error
 n_s=10**10
@@ -595,31 +598,6 @@ for ax, label in zip(axs.flat, 'abc'):
 
 plt.savefig('power_NS_incr.pdf', bbox_inches='tight')
 
-#%% Permutation number dependence
-##################################
-
-N=10**4
-s=0
-s_std=0
-inhomog_err=False
-p0=0.5
-n_s=1000
-skip=10
-num_mes=10
-numtraj=1000
-
-traj=gen_traj(N,s,s_std,inhomog_err,p0,n_s,skip,num_mes,numtraj)
-
-sizes=[100000]
-min_p=np.zeros(len(sizes))
-for i,sample_size in enumerate(sizes):
-    #min_p[i]=np.min(perm_freq(traj))
-    plt.figure()
-    plt.axhline(1/sample_size,c='k')
-    plt.plot(np.sort(perm_freq(traj)))
-
-plt.figure()
-#plt.plot(sizes,min_p)
 
 ##=========================================================================
 #%%
