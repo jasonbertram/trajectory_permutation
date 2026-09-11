@@ -39,8 +39,9 @@ def perm_freq_one(args):
     #safety catch to prevent exact test from hanging if the number of permutations is unmanageable 
     if T<15:
         perm_p=np.array([_ for _ in itertools.permutations(traj)])
-    else:
-        perm_p = rng.permuted(np.tile(traj, (int(1e6), 1)), axis=1) #simply do a much bigger number of samples instead
+    #could alternatively do more samples, but this is not needed in the present study
+    #else:
+    #    perm_p = rng.permuted(np.tile(traj, (int(1e6), 1)), axis=1) 
 
     #idx needed to track pvalue identity (multiprocessing with imap_unordered won't wait for slower pvals so ordering must be tracked)
     return idx, perm_freq_pval_calc(perm_p,traj) 
