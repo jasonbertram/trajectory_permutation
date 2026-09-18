@@ -26,6 +26,8 @@ def perm_freq_one(args):
     rng = np.random.default_rng(seed)
 
     T=len(traj)
+    if T<=5:
+        return idx, np.nan
     if T>8: #do exact test for trajectories <= 8 points long
         rng = np.random.default_rng()
         perm_p = rng.permuted(np.tile(traj, (sample_size, 1)), axis=1)
