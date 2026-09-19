@@ -127,6 +127,9 @@ def perm_sign(trajectories,small):
     from tqdm import tqdm
     for i,p in tqdm(enumerate(trajectories)):
         T=len(p)-1
+        if T<5:
+            p_vals[i]=np.nan
+            continue
         #sign permutation matrix. 
         #only rebuild if length changes
         if T != T_old or i==0:
