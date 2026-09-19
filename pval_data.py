@@ -3,6 +3,22 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import pandas as pd
 
+dros=np.loadtxt('drosophila_pvals.csv',skiprows=1,delimiter=',')
+dap=np.loadtxt('daphnia_pvals.csv',skiprows=1,delimiter=',')
+
+#%%
+
+for _ in range(10):
+    #pvals=dros[~np.isnan(dros[:,_]),_]
+    pvals=-np.log10(dros[~np.isnan(dros[:,_]),_])
+    plt.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals))
+
+#pvals=dap[:,0]
+pvals=-np.log10(dap[:,0])
+plt.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals))
+
+plt.plot(np.linspace(1e-8,1,1000),-np.log10(np.linspace(1,1e-8,1000)))
+
 #%% daphnia data
 #==========#==========#=============
 
