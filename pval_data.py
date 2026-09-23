@@ -8,18 +8,77 @@ dap=np.loadtxt('daphnia_pvals.csv',skiprows=1,delimiter=',')
 
 #%%
 
+fig, axs=plt.subplots(2,1,figsize=[3,4],constrained_layout=True)
+
+x1, x2, y1, y2 = 0, 5e-4, -1e-4, 5e-4 
+axins = axs[0].inset_axes([0.12, 0.6, 0.3, 0.3],xlim=(x1, x2), ylim=(y1, y2))  
+axins.set_xticks([5e-4])
+axins.set_yticks([5e-4])
+axins.set_xticklabels(['5e-4'],fontsize=5)
+axins.set_yticklabels(['5e-4'],fontsize=5)
+
 for _ in range(10):
-    #pvals=dros[~np.isnan(dros[:,_]),_]
-    pvals=-np.log10(dros[~np.isnan(dros[:,_]),_])
-    plt.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals))
+    pvals=dros[~np.isnan(dros[:,_]),_]
+    #pvals=-np.log10(dros[~np.isnan(dros[:,_]),_])
+    line1, =axs[0].plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C0',lw=0.5)
+    axins.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C0')
+    axins.axhline(0.05/len(pvals),c='k',lw=0.5)
 
-#pvals=dap[:,0]
-pvals=-np.log10(dap[:,0])
-plt.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals))
+pvals=(dap[:,0])
+line2, =axs[0].plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C1')
+axins.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C1')
+line4, = axs[0].plot([0,1], [0.05/len(pvals),0.05/len(pvals)],c='k',lw=0.5)
+axins.axhline(0.05/len(pvals),c='k',lw=0.5)
 
-plt.plot(np.linspace(1e-8,1,1000),-np.log10(np.linspace(1,1e-8,1000)))
+line3, =axs[0].plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw=0.5)
+axins.plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw=0.5)
+
+axs[0].indicate_inset_zoom(axins, edgecolor="black")
+axs[0].legend([line1,line2,line3,line4],['D. melanogaster', 'D. pulex', 'null','Bonferroni'], loc='lower right',fontsize=5)
+
+axs[0].set_ylabel(r'$p$-value')
+
+for ax, label in zip(axs.flat, 'abcdef'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
+
+
+x1, x2, y1, y2 = -1e-4, 5e-3, -1e-2, 5e-2 
+axins = axs[1].inset_axes([0.65, 0.2, 0.3, 0.3],xlim=(x1, x2), ylim=(y1, y2))  
+axins.set_xticks([x2])
+axins.set_yticks([y2])
+axins.set_xticklabels(['5e-3'],fontsize=5)
+axins.set_yticklabels(['5e-2'],fontsize=5)
+
+for _ in range(11,20):
+    pvals=dros[~np.isnan(dros[:,_]),_]
+    #pvals=-np.log10(dros[~np.isnan(dros[:,_]),_])
+    line1, =axs[1].plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C0',lw=0.5)
+    axins.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C0')
+    axins.axhline(0.05/len(pvals),c='k',lw=0.5)
+
+pvals=(dap[:,1])
+axs[1].plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C1')
+axins.plot(np.arange(len(pvals))/len(pvals),np.sort(pvals),c='C1')
+axs[1].plot([0,1], [0.05/len(pvals),0.05/len(pvals)],c='k',lw=0.5)
+axins.axhline(0.05/len(pvals),c='k',lw=0.5)
+
+axs[1].plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw=0.5)
+axins.plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw=0.5)
+
+axs[1].indicate_inset_zoom(axins, edgecolor="black")
+axs[1].set_xlabel(r'Rank (normalized)')
+axs[1].set_ylabel(r'$p$-value')
+
+for ax, label in zip(axs.flat, 'abcdef'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
+
+
+plt.savefig('pvalues.pdf', bbox_inches='tight')
 
 #%% daphnia data
+"""
 #==========#==========#=============
 
 data_f = np.loadtxt('/home/jason/onedrive/data/daphniaGenome_freqPVals_byTraj_10kPerms.csv', delimiter=',')
@@ -167,3 +226,4 @@ axs[1].set_xlim([0,np.cumsum(chr_ends)[-1]])
 plt.tight_layout()
 
 plt.savefig('drosophila_manhattan.pdf')
+"""
