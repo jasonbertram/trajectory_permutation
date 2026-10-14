@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import pandas as pd
 
-dros=np.loadtxt('drosophila_pvals.csv',skiprows=1,delimiter=',')
-dap=np.loadtxt('daphnia_pvals.csv',skiprows=1,delimiter=',')
+dros=np.loadtxt('/home/jason/onedrive/data/drosophila_pvals.csv',delimiter=',')
+dap=np.loadtxt('/home/jason/onedrive/data/daphnia_pvals.csv',delimiter=',')
 
 #%%
+####################################
 
 fig, axs=plt.subplots(2,1,figsize=[3,4],constrained_layout=True)
 
@@ -78,11 +79,7 @@ for ax, label in zip(axs.flat, 'abcdef'):
 plt.savefig('pvalues.pdf', bbox_inches='tight')
 
 #%% daphnia data
-"""
 #==========#==========#=============
-
-data_f = np.loadtxt('/home/jason/onedrive/data/daphniaGenome_freqPVals_byTraj_10kPerms.csv', delimiter=',')
-data_s = np.loadtxt('/home/jason/onedrive/data/daphniaGenome_signPVals_byTraj.csv', delimiter=',')
 
 raw = pd.read_csv('/home/jason/onedrive/data/daphnia_af.csv')
 chr_ends=np.array([np.max(raw[raw['Chr']==_]['Position']) for _ in range(1,13)])
@@ -90,12 +87,10 @@ chr_ends=np.array([np.max(raw[raw['Chr']==_]['Position']) for _ in range(1,13)])
 for _ in range(2,13):
     raw.loc[raw['Chr']==_,'Position'] += np.cumsum(chr_ends)[_-2] 
 
-#pos_dict={float(_):raw.iloc[_]['Position'] for _ in range(len(raw))}
-data_f[:,0] = np.array([raw.iloc[int(_)]['Position'] for _ in data_f[:,0]])
-data_f=data_f[np.argsort(data_f[:,0])]
+dap_pos=np.array(raw['Position'])
+dap=dap[np.argsort(dap_pos)]
+dap_pos=np.sort(dap_pos)
 
-data_s[:,0] = np.array([raw.iloc[int(_)]['Position'] for _ in data_s[:,0]])
-data_s=data_s[np.argsort(data_s[:,0])]
 
 #%% daphnia manhattan
 #==========#==========#=============
@@ -104,18 +99,16 @@ fig, axs=plt.subplots(2,1,figsize=[6,4])
 colors=['r','b']
 
 n=100 #window size
-
-cumsum_f=np.cumsum(data_f[:,1])
+cumsum_f=np.cumsum(dap,0)
 ma=(cumsum_f[n:]-cumsum_f[:-n])/n
 
-#axs[0].plot(data_f[n::,0],ma[:])
-#axs[0].vlines(np.cumsum(chr_ends),0.4,0.7)
+#plt.plot(dap_pos[:-n],ma[:,0])
 
-random_1000 = np.array([np.mean(np.random.choice(data_f[:,1],n)) for _ in range(10000)]) 
-mu,sig = sp.stats.norm.fit(random_1000)
+random_win = np.array([np.mean(np.random.choice(dap[:,0],n)) for _ in range(10000)]) 
+mu,sig = sp.stats.norm.fit(random_win)
 
-col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in data_f[n::n,0] ])
-axs[0].scatter(data_f[n::n,0],-np.log10(sp.stats.norm.cdf(ma[::n],mu,sig)),c=col_array, s=0.5)
+col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in dap_pos[n::n]])
+axs[0].scatter(dap_pos[n::n],-np.log10(sp.stats.norm.cdf(ma[::n,0],mu,sig)),c=col_array, s=0.5)
 
 alpha_tests=0.05/len(ma[::n])
 axs[0].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
@@ -128,6 +121,8 @@ axs[0].set_xlim([0,np.cumsum(chr_ends)[-1]])
 cumsum_s=np.cumsum(data_s[:,2])
 ma=(cumsum_s[n:]-cumsum_s[:-n])/n
 #plt.plot(ma[:])
+
+#%%
 
 random_1000 = np.array([np.mean(np.random.choice(data_s[:,2],n)) for _ in range(10000)]) 
 mu,sig = sp.stats.norm.fit(random_1000)
@@ -146,22 +141,10 @@ plt.tight_layout()
 
 plt.savefig('daphnia_manhattan.pdf')
 
-#%% daphnia other
-#==========#==========#=============
-
-fig, axs=plt.subplots(1,1,figsize=[8,4])
-
-axs.hist(data_f[:,1])
-
-axs.set_xlabel(r'$p$-value', fontsize=14)
-axs.set_ylabel(r'Count', fontsize=14)
-
-plt.tight_layout()
-plt.savefig('pvalue.pdf')
-
 #%% drosophila data
 #==========#==========#=============
 
+"""
 data_f = np.loadtxt('/home/jason/onedrive/data/drosophilaGenome_freqPVals_byTraj_10kPerms.csv', delimiter=',')
 data_s = np.loadtxt('/home/jason/onedrive/data/drosophilaGenome_signPVals_byTraj.csv', delimiter=',')
 
