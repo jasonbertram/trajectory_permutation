@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import pandas as pd
 
-dros=np.loadtxt('/home/jason/onedrive/data/drosophila_pvals.csv',delimiter=',')
+#dros=np.loadtxt('/home/jason/onedrive/data/drosophila_pvals.csv',delimiter=',')
 dap=np.loadtxt('/home/jason/onedrive/data/daphnia_pvals.csv',delimiter=',')
 
 #%%
@@ -118,11 +118,12 @@ axs[0].set_ylabel('$-log(p)$', fontsize=14)
 axs[0].set_ylim([0,20])
 axs[0].set_xlim([0,np.cumsum(chr_ends)[-1]])
 
+#%%
+
 cumsum_s=np.cumsum(data_s[:,2])
 ma=(cumsum_s[n:]-cumsum_s[:-n])/n
 #plt.plot(ma[:])
 
-#%%
 
 random_1000 = np.array([np.mean(np.random.choice(data_s[:,2],n)) for _ in range(10000)]) 
 mu,sig = sp.stats.norm.fit(random_1000)
