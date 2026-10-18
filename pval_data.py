@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import pandas as pd
 
-#dros=np.loadtxt('/home/jason/onedrive/data/drosophila_pvals.csv',delimiter=',')
 dap=np.loadtxt('/home/jason/onedrive/data/daphnia_pvals.csv',delimiter=',')
+dros=np.loadtxt('/home/jason/onedrive/data/drosophila_pvals.csv',delimiter=',')
 
 #%%
 ####################################
 
-fig, axs=plt.subplots(2,1,figsize=[3,4],constrained_layout=True)
+fig, axs=plt.subplots(2,1,figsize=[3,4], constrained_layout=True)
 
 x1, x2, y1, y2 = 0, 5e-4, -1e-4, 5e-4 
 axins = axs[0].inset_axes([0.12, 0.6, 0.3, 0.3],xlim=(x1, x2), ylim=(y1, y2))  
@@ -95,7 +95,7 @@ dap_pos=np.sort(dap_pos)
 #%% daphnia manhattan
 #==========#==========#=============
 
-fig, axs=plt.subplots(2,1,figsize=[6,4])
+fig, axs=plt.subplots(2,1,figsize=[6,4], constrained_layout=True)
 colors=['r','b']
 
 n=100 #window size
@@ -115,39 +115,30 @@ axs[0].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
 axs[0].set_title('Frequency permutation test (any detectable evolution)')
 axs[0].set_ylabel('$-log(p)$', fontsize=14)
 
-axs[0].set_ylim([0,20])
+#axs[0].set_ylim([0,20])
 axs[0].set_xlim([0,np.cumsum(chr_ends)[-1]])
 
-#%%
 
-cumsum_s=np.cumsum(data_s[:,2])
-ma=(cumsum_s[n:]-cumsum_s[:-n])/n
-#plt.plot(ma[:])
+random_win = np.array([np.mean(np.random.choice(dap[:,1],n)) for _ in range(10000)]) 
+mu,sig = sp.stats.norm.fit(random_win)
 
-
-random_1000 = np.array([np.mean(np.random.choice(data_s[:,2],n)) for _ in range(10000)]) 
-mu,sig = sp.stats.norm.fit(random_1000)
-
-col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in data_s[n::n,0] ])
-axs[1].scatter(data_s[n::n,0],-np.log10(sp.stats.norm.cdf(ma[::n],mu,sig)),c=col_array, s=0.5)
+axs[1].scatter(dap_pos[n::n],-np.log10(sp.stats.norm.cdf(ma[::n,1],mu,sig)),c=col_array, s=0.5)
 axs[1].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
 axs[1].set_title('Sign permutation test (directional selection)')
 axs[1].set_xlabel('Position', fontsize=14)
 axs[1].set_ylabel('$-log(p)$', fontsize=14)
 
-axs[1].set_ylim([0,20])
+axs[1].set_ylim([0,100])
 axs[1].set_xlim([0,np.cumsum(chr_ends)[-1]])
 
-plt.tight_layout()
+for ax, label in zip(axs.flat, 'ab'):
+    ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+            fontsize=12, fontweight='bold', va='bottom')
 
 plt.savefig('daphnia_manhattan.pdf')
 
 #%% drosophila data
 #==========#==========#=============
-
-"""
-data_f = np.loadtxt('/home/jason/onedrive/data/drosophilaGenome_freqPVals_byTraj_10kPerms.csv', delimiter=',')
-data_s = np.loadtxt('/home/jason/onedrive/data/drosophilaGenome_signPVals_byTraj.csv', delimiter=',')
 
 raw = pd.read_table('/home/jason/onedrive/data/frequencies.tab')
 chromosomes=raw['chr'].unique()
@@ -156,58 +147,51 @@ chr_ends=np.array([np.max(raw[raw['chr']==_]['pos']) for _ in chromosomes])
 for _ in range(1,len(chromosomes)):
     raw.loc[raw['chr']==chromosomes[_],'pos'] += np.cumsum(chr_ends)[_-1] 
 
-data_f[:,0] = np.array([raw.iloc[int(_)]['pos'] for _ in data_f[:,0]])
-data_f=data_f[np.argsort(data_f[:,0])]
-
-data_s[:,0] = np.array([raw.iloc[int(_)]['pos'] for _ in data_s[:,0]])
-data_s=data_s[np.argsort(data_s[:,0])]
+dros_pos=np.array(raw['pos'])
 
 #%% drosophila manhattan
 #==========#==========#=============
-
-fig, axs=plt.subplots(2,1,figsize=[6,4])
 colors=['r','b']
 
-n=100 #window size
+for rep in range(1,11):
+    fig, axs=plt.subplots(2,1,figsize=[6,4], constrained_layout=True)
 
-cumsum_f=np.cumsum(data_f[:,1])
-ma=(cumsum_f[n:]-cumsum_f[:-n])/n
+    pvals_filtered=dros[~np.isnan(dros[:,rep-1])][:,[rep-1,rep-1+10]]
+    pos_filtered=dros_pos[~np.isnan(dros[:,rep-1])]
 
-#axs[0].plot(data_f[n::,0],ma[:])
-#axs[0].vlines(np.cumsum(chr_ends),0.4,0.7)
+    n=100 #window size
+    cumsum_f=np.cumsum(pvals_filtered,0)
+    ma=(cumsum_f[n:]-cumsum_f[:-n])/n
 
-random_1000 = np.array([np.mean(np.random.choice(data_f[:,1],n)) for _ in range(10000)]) 
-mu,sig = sp.stats.norm.fit(random_1000)
+    random_win = np.array([np.mean(np.random.choice(pvals_filtered[:,0],n)) for _ in range(10000)]) 
+    mu,sig = sp.stats.norm.fit(random_win)
 
-col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in data_f[n::n,0] ])
-axs[0].scatter(data_f[n::n,0],-np.log10(sp.stats.norm.cdf(ma[::n],mu,sig)),c=col_array, s=0.5)
+    col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in pos_filtered[n::n]])
+    axs[0].scatter(pos_filtered[n::n],-np.log10(sp.stats.norm.cdf(ma[::n,0],mu,sig)),c=col_array, s=0.5)
 
-alpha_tests=0.05/len(ma[::n])
-axs[0].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
-axs[0].set_title('Frequency permutation test (any detectable evolution)')
-axs[0].set_ylabel('$-log(p)$', fontsize=14)
+    alpha_tests=0.05/len(ma[::n])
+    axs[0].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
+    axs[0].set_title('Frequency permutation test (any detectable evolution)')
+    axs[0].set_ylabel('$-log(p)$', fontsize=14)
 
-axs[0].set_ylim([0,20])
-axs[0].set_xlim([0,np.cumsum(chr_ends)[-1]])
+    #axs[0].set_ylim([0,20])
+    axs[0].set_xlim([0,np.cumsum(chr_ends)[-1]])
 
-cumsum_s=np.cumsum(data_s[:,2])
-ma=(cumsum_s[n:]-cumsum_s[:-n])/n
-#plt.plot(ma[:])
+    random_win = np.array([np.mean(np.random.choice(pvals_filtered[:,1],n)) for _ in range(10000)]) 
+    mu,sig = sp.stats.norm.fit(random_win)
 
-random_1000 = np.array([np.mean(np.random.choice(data_s[:,2],n)) for _ in range(10000)]) 
-mu,sig = sp.stats.norm.fit(random_1000)
+    axs[1].scatter(pos_filtered[n::n],-np.log10(sp.stats.norm.cdf(ma[::n,1],mu,sig)),c=col_array, s=0.5)
+    axs[1].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
+    axs[1].set_title('Sign permutation test (directional selection)')
+    axs[1].set_xlabel('Position', fontsize=14)
+    axs[1].set_ylabel('$-log(p)$', fontsize=14)
 
-col_array = np.array([colors[np.mod(np.sum(i-np.cumsum(chr_ends)>0),2)] for i in data_s[n::n,0] ])
-axs[1].scatter(data_s[n::n,0],-np.log10(sp.stats.norm.cdf(ma[::n],mu,sig)),c=col_array, s=0.5)
-axs[1].axhline(-np.log10(alpha_tests),linestyle='--', color='k')
-axs[1].set_title('Sign permutation test (directional selection)')
-axs[1].set_xlabel('Position', fontsize=14)
-axs[1].set_ylabel('$-log(p)$', fontsize=14)
+    axs[1].set_ylim([0,20])
+    axs[1].set_xlim([0,np.cumsum(chr_ends)[-1]])
 
-axs[1].set_ylim([0,20])
-axs[1].set_xlim([0,np.cumsum(chr_ends)[-1]])
+    for ax, label in zip(axs.flat, 'ab'):
+        ax.text(-0.1, 1.05, label, transform=ax.transAxes,
+                fontsize=12, fontweight='bold', va='bottom')
 
-plt.tight_layout()
 
-plt.savefig('drosophila_manhattan.pdf')
-"""
+    plt.savefig('drosophila_manhattan'+str(rep)+'.pdf')

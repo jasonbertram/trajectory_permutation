@@ -27,6 +27,7 @@ def perm_freq_one(args):
 
     T=len(traj)
     if T<=5:
+        #SP test is pointless if there are fewer than 5 time points.
         return idx, np.nan
     if T>8: #do exact test for trajectories <= 8 points long
         rng = np.random.default_rng()
