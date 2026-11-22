@@ -35,7 +35,7 @@ line3, =axs[0].plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw
 axins.plot(np.linspace(1e-8,1,1000),(np.linspace(1e-8,1,1000)),'k--',lw=0.5)
 
 axs[0].indicate_inset_zoom(axins, edgecolor="black")
-axs[0].legend([line1,line2,line3,line4],['D. melanogaster', 'D. pulex', 'null','Bonferroni'], loc='lower right',fontsize=5)
+axs[0].legend([line1,line2,line3,line4],['D. simulans', 'D. pulex', 'null','Bonferroni'], loc='lower right',fontsize=5)
 
 axs[0].set_ylabel(r'$p$-value')
 
